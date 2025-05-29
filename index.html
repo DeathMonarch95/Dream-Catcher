@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Downloader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Inter font and general body styling */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        /* Ensure the main container is centered and responsive */
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+        /* Basic styling for buttons */
+        .btn {
+            @apply px-6 py-3 rounded-lg font-semibold text-white transition-colors duration-200;
+        }
+        .btn-video {
+            @apply bg-red-600 hover:bg-red-700;
+        }
+        .btn-audio {
+            @apply bg-blue-600 hover:bg-blue-700;
+        }
+        .btn:active {
+            transform: translateY(1px); /* Simple press effect */
+        }
+    </style>
+</head>
+<body>
+    <div class="container bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">YouTube Downloader</h1>
+
+        <p class="text-gray-600 mb-6 text-center">
+            Enter a YouTube video URL below and choose to download video or audio.
+        </p>
+
+        <div class="mb-6">
+            <label for="videoUrl" class="block text-gray-700 text-sm font-medium mb-2">YouTube Video URL:</label>
+            <input
+                type="url"
+                id="videoUrl"
+                placeholder="e.g., https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <button id="downloadVideoButton" class="btn btn-video shadow-md hover:shadow-lg">
+                Download Video
+            </button>
+            <button id="downloadAudioButton" class="btn btn-audio shadow-md hover:shadow-lg">
+                Download Audio
+            </button>
+        </div>
+
+        <div id="messageBox" class="mt-8 p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg hidden">
+            </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const videoUrlInput = document.getElementById('videoUrl');
+            const downloadVideoButton = document.getElementById('downloadVideoButton');
+            const downloadAudioButton = document.getElementById('downloadAudioButton');
+            const messageBox = document.getElementById('messageBox');
+
+            function showMessage(message, type = 'info') {
+                messageBox.textContent = message;
+                messageBox.classList.remove('hidden', 'bg-yellow-100', 'border-yellow-300', 'text-yellow-800', 'bg-red-100', 'border-red-300', 'text-red-800', 'bg-green-100', 'border-green-300', 'text-green-800');
+
+                if (type === 'error') {
+                    messageBox.classList.add('bg-red-100', 'border-red-300', 'text-red-800');
+                } else if (type === 'success') {
+                    messageBox.classList.add('bg-green-100', 'border-green-300', 'text-green-800');
+                } else { // default info
+                    messageBox.classList.add('bg-yellow-100', 'border-yellow-300', 'text-yellow-800');
+                }
+                messageBox.classList.remove('hidden');
+            }
+
+            function clearMessage() {
+                messageBox.classList.add('hidden');
+                messageBox.textContent = '';
+            }
+
+            function handleDownload(type) {
+                const url = videoUrlInput.value.trim();
+                clearMessage();
+
+                if (!url) {
+                    showMessage('Please enter a YouTube video URL.', 'error');
+                    return;
+                }
+
+                // Basic URL validation for YouTube
+                const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+                if (!youtubeRegex.test(url)) {
+                    showMessage('Please enter a valid YouTube URL.', 'error');
+                    return;
+                }
+
+                showMessage(`Initiating download for ${type} from: ${url}... Please wait.`, 'info');
+
+                // *** This is where your web page talks to your Python backend ***
+                fetch('http://127.0.0.1:5000/download', { // This URL must match your backend server's address and port
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url, format: type })
+                })
+                .then(response => {
+                    // Check if the response is successful (HTTP 200 OK)
+                    if (response.ok) {
+                        // Backend will send the file directly, so we get it as a 'blob' (binary data)
+                        return response.blob();
+                    } else {
+                        // If there's an error from the backend, it will send a JSON response
+                        return response.json().then(errorData => {
+                            // Throw an error with the message from the backend
+                            throw new Error(errorData.error || 'Unknown error occurred from server.');
+                        });
+                    }
+                })
+                .then(blob => {
+                    // Create a temporary URL for the downloaded file
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a'); // Create a temporary link element
+                    a.href = downloadUrl;
+                    // Determine filename; you could ideally get this from backend headers (Content-Disposition)
+                    const filename = (type === 'video' ? 'youtube_video' : 'youtube_audio') + (blob.type.includes('mp4') ? '.mp4' : (blob.type.includes('mp3') ? '.mp3' : ''));
+                    a.download = filename; // Set the download filename
+                    document.body.appendChild(a); // Add the link to the document
+                    a.click(); // Programmatically click the link to start download
+                    a.remove(); // Remove the temporary link
+                    window.URL.revokeObjectURL(downloadUrl); // Clean up the temporary URL
+                    showMessage('Download initiated! Your browser should prompt you to save the file.', 'success');
+                })
+                .catch(error => {
+                    showMessage(`Download failed: ${error.message}`, 'error');
+                });
+            }
+
+            downloadVideoButton.addEventListener('click', () => handleDownload('video'));
+            downloadAudioButton.addEventListener('click', () => handleDownload('audio'));
+        });
+    </script>
+</body>
+</html>  
