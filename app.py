@@ -159,4 +159,4 @@ if __name__ == '__main__':
     # This 'app.run' block is primarily for local development.
     # Render's environment variables (like PORT) should be respected if you're using them.
     port = int(os.environ.get('PORT', 5000)) # Use PORT env var if available, else 5000
-    app.run(debug=True, host='0.0.0.0', port=port) # Listen on all interfaces
+    app.run(debug=True, host='0.0.0.0', port=port) # Listen on all interfaces             
