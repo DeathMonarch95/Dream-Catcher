@@ -153,10 +153,11 @@ def download_media(): # This is the ONLY download function definition you should
         logging.exception(f"An unexpected general error occurred in /download route: {e}")
         return jsonify({"success": False, "error": f"An unexpected server error occurred: {str(e)}"}), 500
 
-# --- Run the Flask Application ---
+            # --- Run the Flask Application ---
 if __name__ == '__main__':
     # When deploying to Render, Gunicorn (or your chosen WSGI server) will run the app.
     # This 'app.run' block is primarily for local development.
     # Render's environment variables (like PORT) should be respected if you're using them.
     port = int(os.environ.get('PORT', 5000)) # Use PORT env var if available, else 5000
-    app.run(debug=True, host='0.0.0.0', port=port) # Listen on all interfaces             
+    app.run(debug=True, host='0.0.0.0', port=port) # Listen on all interfaces
+    
