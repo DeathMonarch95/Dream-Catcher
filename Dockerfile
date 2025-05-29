@@ -24,4 +24,4 @@ EXPOSE 5000
 
 # Define the command to run your application using Gunicorn
 # This replaces the Procfile for Docker-based services
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:$PORT"]
+CMD gunicorn app:app --bind 0.0.0.0:$PORT
