@@ -6,6 +6,7 @@ import re
 
 from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
+import yt_dlp # Add this line
 from yt_dlp import YoutubeDL
 
 # Configure logging
