@@ -114,11 +114,11 @@
                 showMessage(`Initiating download for ${type} from: ${url}... Please wait.`, 'info');
 
                 // *** This is where your web page talks to your Python backend ***
-                fetch('http://127.0.0.1:5000/download', { // This URL must match your backend server's address and port
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: url, format: type })
-                })
+                fetch('https://dream-catcher-eafo.onrender.com/download', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: url, format: type })
+})
                 .then(response => {
                     // Check if the response is successful (HTTP 200 OK)
                     if (response.ok) {
